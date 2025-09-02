@@ -1,6 +1,9 @@
 class ScrapingService {
     constructor() {
-        this.BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001';
+        // Use relative path in production (same origin). Fallback to env or localhost for dev.
+        const isBrowser = typeof window !== 'undefined';
+        const origin = isBrowser ? window.location.origin : '';
+        this.BACKEND_URL = process.env.REACT_APP_BACKEND_URL || origin || 'http://localhost:3001';
         this.BASE_URL = 'https://galleryepic.com';
         this.isAborted = false;
         this.seen = new Set();

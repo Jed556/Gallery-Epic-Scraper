@@ -1,0 +1,21 @@
+{
+    "buildCommand": "npm install --prefix app && npm run build --prefix app",
+    "outputDirectory": "app/build",
+    "framework": "create-react-app",
+    "functions": {
+        "api/*.js": {
+            "memory": 512,
+            "maxDuration": 30
+        }
+    },
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/app/build/$1"
+        }
+    ]
+}
