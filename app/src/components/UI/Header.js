@@ -17,14 +17,14 @@ import {
 } from '@mui/icons-material';
 import { useScraper } from '../../contexts/ScraperContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { useAnimatedCounter } from '../../hooks/useAnimatedCounter';
+import { useCounter } from '../../hooks/useCounter';
 import Logo from './Logo';
 
 function Header({ sidebarOpen, setSidebarOpen }) {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const { isLoading, galleryData } = useScraper();
     const { mode, toggleMode } = useThemeMode();
-    const animatedCount = useAnimatedCounter(galleryData.length, 800);
+    const animatedCount = useCounter(galleryData.length, 800);
 
     return (
         <AppBar

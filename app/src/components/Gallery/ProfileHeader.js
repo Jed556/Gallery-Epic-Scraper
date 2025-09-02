@@ -26,57 +26,13 @@ import {
     Link,
     AccountCircle,
 } from '@mui/icons-material';
-import { useAnimatedCounter } from '../../hooks/useAnimatedCounter';
-import { formatCompact, formatBytes } from '../../utils/numberFormat';
+import { useCounter } from '../../hooks/useCounter';
+import { formatBytes } from '../../utils/numberFormat';
 
-// Skeleton component for profile header
-function ProfileHeaderSkeleton() {
-    return (
-        <Paper
-            elevation={3}
-            sx={{
-                borderRadius: '12px',
-                overflow: 'hidden',
-                bgcolor: 'background.paper',
-                boxShadow: 3,
-            }}
-        >
-            {/* Banner skeleton with responsive viewport-based height */}
-            <Skeleton
-                variant="rectangular"
-                sx={{
-                    aspectRatio: '1500/500',
-                    width: '100%',
-                    maxHeight: '40vh',
-                    minHeight: '40vh',
-                    borderRadius: '12px 12px 0 0'
-                }}
-            />
-
-            <Box sx={{ p: 3 }}>
-                <Stack direction="row" spacing={2} alignItems="flex-start">
-                    <Skeleton variant="circular" width={88} height={88} />
-
-                    <Box sx={{ flex: 1 }}>
-                        <Skeleton variant="text" width="25%" height={32} sx={{ mb: 1 }} />
-                        <Skeleton variant="text" width="20%" height={20} sx={{ mb: 2 }} />
-
-                        {/* Social links skeleton */}
-                        <Stack direction="row" spacing={1} sx={{}}>
-                            <Skeleton variant="rounded" width={80} height={24} />
-                            <Skeleton variant="rounded" width={90} height={24} />
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-        </Paper>
-    );
-}
-
-// Profile Header that manages its own loading state
+// Dynamic skeleton approach: always render layout; skeletons appear where data missing.
 function ProfileHeader({ profile, items = [] }) {
-    // Animated counter for items (must be called before any early returns)
-    const animatedItemCount = useAnimatedCounter(items.length, 800);
+    const isProfileLoading = !profile || !profile.name; // granular loading flag
+    const animatedItemCount = useCounter(items.length, 800); // existing animated total cosplays
 
     // Function to get appropriate social media icon
     const getSocialIcon = (url, text) => {
@@ -138,36 +94,37 @@ function ProfileHeader({ profile, items = [] }) {
         return <Link />;
     };
 
-    // 🎯 If no profile data yet, show skeleton
-    if (!profile || !profile.name) {
-        return <ProfileHeaderSkeleton />;
-    }
-
-    // 📊 Calculate stats from items
-    const totalPhotos = items.reduce((sum, item) => sum + (item.photos || 0), 0);
-    const totalVideos = items.reduce((sum, item) => sum + (item.videos || 0), 0);
-    const totalSize = items.reduce((sum, item) => {
-        if (!item.fileSize && !item.size) return sum;
+    // 📊 Calculate stats only if items exist
+    const totalPhotos = items.length ? items.reduce((sum, item) => sum + (item.photos || 0), 0) : 0;
+    const totalVideos = items.length ? items.reduce((sum, item) => sum + (item.videos || 0), 0) : 0;
+    const totalSize = items.length ? items.reduce((sum, item) => {
+        if (!item || (!item.fileSize && !item.size)) return sum;
         const sizeStr = item.fileSize || item.size || '';
         const match = sizeStr.match(/([\d.,]+)\s*(KB|MB|GB)\b/i);
         if (!match) return sum;
         const num = parseFloat(match[1].replace(/,/g, ''));
         const unit = match[2].toUpperCase();
-        let bytes = 0;
-        switch (unit) {
-            case 'KB': bytes = num * 1024; break;
-            case 'MB': bytes = num * 1024 * 1024; break;
-            case 'GB': bytes = num * 1024 * 1024 * 1024; break;
-            default: bytes = 0; break;
-        }
-        return sum + bytes;
-    }, 0);
+        const map = { KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 };
+        return sum + (num * (map[unit] || 0));
+    }, 0) : 0;
 
-    const formattedPhotos = formatCompact(totalPhotos);
-    const formattedVideos = formatCompact(totalVideos);
-    const formattedSize = formatBytes(totalSize);
+    // Animated counters for each stat (only run when totals > 0)
+    // Always call hooks unconditionally to satisfy Rules of Hooks
+    const animatedPhotosCompact = useCounter(totalPhotos, 800, true);
+    const animatedVideosCompact = useCounter(totalVideos, 800, true);
+    const animatedBytes = useCounter(totalSize, 800); // raw bytes
+    const formattedPhotos = totalPhotos ? animatedPhotosCompact : null;
+    const formattedVideos = totalVideos ? animatedVideosCompact : null;
+    const formattedSize = totalSize ? formatBytes(animatedBytes) : null;
 
-    const coserName = profile.name;
+    const totalViews = items.length ? items.reduce((sum, item) => sum + (item.views || 0), 0) : 0;
+    const totalDownloads = items.length ? items.reduce((sum, item) => sum + (item.downloads || 0), 0) : 0;
+    const animatedViewsCompact = useCounter(totalViews, 900, true);
+    const animatedDownloadsCompact = useCounter(totalDownloads, 900, true);
+    const formattedViews = totalViews ? animatedViewsCompact : null;
+    const formattedDownloads = totalDownloads ? animatedDownloadsCompact : null;
+
+    const coserName = profile?.name;
 
     // 🎉 Render real profile header
     return (
@@ -181,88 +138,176 @@ function ProfileHeader({ profile, items = [] }) {
                 transition: 'all 0.3s ease-in-out', // Smooth transition from skeleton
             }}
         >
-            {/* Banner Section with responsive viewport-based height */}
-            {profile.banner ? (
-                <CardMedia
-                    component="img"
-                    image={profile.banner}
-                    alt="Profile Banner"
-                    sx={{
-                        aspectRatio: '1500/500',
-                        width: '100%',
-                        maxHeight: '40vh',
-                        minHeight: '40vh',
-                        objectFit: 'cover',
-                        borderRadius: '12px 12px 0 0',
-                    }}
-                />
-            ) : (
-                <Box
-                    sx={{
-                        aspectRatio: '1500/500',
-                        width: '100%',
-                        maxHeight: '25vh',
-                        minHeight: '25vh',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        borderRadius: '12px 12px 0 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <Typography variant="h6" color="white" sx={{ opacity: 0.8 }}>
-                        {profile.name}
-                    </Typography>
-                </Box>
-            )}
+            {/* Banner + Overlapping Avatar Wrapper */}
+            <Box sx={{ position: 'relative' }}>
+                {/* Banner (image or skeleton) */}
+                {profile?.banner ? (
+                    <CardMedia
+                        component="img"
+                        image={profile.banner}
+                        alt="Profile Banner"
+                        sx={{
+                            aspectRatio: '1500/500',
+                            width: '100%',
+                            maxHeight: '40vh',
+                            minHeight: '40vh',
+                            objectFit: 'cover',
+                            borderRadius: '12px 12px 0 0',
+                            opacity: isProfileLoading ? 0 : 1,
+                            transition: 'opacity .3s ease'
+                        }}
+                    />
+                ) : (
+                    <Skeleton
+                        variant="rectangular"
+                        sx={{
+                            aspectRatio: '1500/500',
+                            width: '100%',
+                            maxHeight: '40vh',
+                            minHeight: '40vh',
+                            borderRadius: '12px 12px 0 0'
+                        }}
+                    />
+                )}
 
-            <Box sx={{ p: 3, position: 'relative' }}>
-                <Stack direction="row" spacing={2} alignItems="flex-start">
+                {/* Overlapping Avatar (absolute) */}
+                {profile?.avatar ? (
                     <Avatar
                         src={profile.avatar}
                         sx={{
                             position: 'absolute',
-                            top: -78,
-                            left: 24,
-                            width: 200,
-                            height: 200,
+                            left: { xs: '50%', sm: 32 },
+                            bottom: { xs: -70, sm: -94, md: -108 },
+                            transform: { xs: 'translateX(-50%)', sm: 'none' },
+                            width: { xs: 140, sm: 195, md: 215 },
+                            height: { xs: 140, sm: 195, md: 215 },
                             bgcolor: 'primary.main',
-                            boxShadow: 2,
+                            boxShadow: 8,
+                            border: '5px solid',
+                            borderColor: 'background.paper',
+                            zIndex: 2,
+                            transition: 'width .25s ease, height .25s ease, bottom .25s ease',
                         }}
                     >
                         {!profile.avatar && <Person sx={{ fontSize: 44 }} />}
                     </Avatar>
-                    <Box sx={{ ml: 10 }}> </Box>
-                    <Box sx={{ flex: 1 }}>
-                        <Typography variant="h5" component="h1" fontWeight={700} gutterBottom>
+                ) : (
+                    <Skeleton
+                        variant="circular"
+                        sx={{
+                            position: 'absolute',
+                            left: { xs: '50%', sm: 32 },
+                            bottom: { xs: -70, sm: -94, md: -108 },
+                            transform: { xs: 'translateX(-50%)', sm: 'none' },
+                            width: { xs: 140, sm: 195, md: 215 },
+                            height: { xs: 140, sm: 195, md: 215 },
+                            zIndex: 2,
+                            border: '5px solid',
+                            borderColor: 'background.paper',
+                        }}
+                    />
+                )}
+            </Box>
+
+            {/* Content Section under overlapping avatar */}
+            <Box
+                sx={{
+                    px: 3,
+                    // Equal vertical padding top/bottom
+                    pt: { xs: 3, sm: 3, md: 3 },
+                    pb: { xs: 3, sm: 3, md: 3 },
+                    position: 'relative',
+                }}
+            >
+                <Box
+                    sx={{
+                        pl: { xs: 0, sm: '230px', md: '255px' },
+                        textAlign: { xs: 'center', sm: 'left' },
+                        transition: 'padding-left .25s ease',
+                        // pr: { xs: 0, sm: 14 }, // reserve space so text doesn't run under social buttons
+
+                    }}
+                >
+                    {/* Name */}
+                    {coserName ? (
+                        <Typography
+                            variant="h5"
+                            component="h1"
+                            fontWeight={700}
+                            gutterBottom
+                            sx={{ lineHeight: 1.2 }}
+                        >
                             {coserName}
                         </Typography>
+                    ) : (
+                        <Skeleton variant="text" width="25%" height={36} sx={{ mb: 1 }} />
+                    )}
 
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {animatedItemCount} items • {formattedPhotos} photos • {formattedVideos} videos • {formattedSize}
+                    {/* Primary stats line */}
+                    {(formattedPhotos && formattedVideos && formattedSize) ? (
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ lineHeight: 1.4, mt: 0.75, mb: (totalViews > 0 || totalDownloads > 0) ? 0.25 : 0 }}
+                        >
+                            {animatedItemCount} cosplays • {formattedPhotos} photos • {formattedVideos} videos • {formattedSize}
                         </Typography>
+                    ) : (
+                        <Skeleton variant="text" width="35%" height={20} sx={{ mt: 1, mb: 0.5 }} />
+                    )}
 
-                        {/* Social Links */}
-                        {profile.links && profile.links.length > 0 && (
-                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                                {profile.links.map((link, index) => (
-                                    <Button
-                                        key={index}
-                                        variant="outlined"
-                                        size="small"
-                                        startIcon={getSocialIcon(link.url, link.text)}
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        sx={{ textTransform: 'none' }}
-                                    >
-                                        {link.text}
-                                    </Button>
-                                ))}
-                            </Stack>
-                        )}
-                    </Box>
-                </Stack>
+                    {/* Views / Downloads */}
+                    {(totalViews > 0 || totalDownloads > 0) ? (
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ lineHeight: 1.4, mt: 0.25, mb: 0 }}
+                        >
+                            {totalViews > 0 && `${formattedViews} views`}
+                            {totalViews > 0 && totalDownloads > 0 && ' • '}
+                            {totalDownloads > 0 && `${formattedDownloads} downloads`}
+                        </Typography>
+                    ) : (
+                        <Skeleton variant="text" width="28%" height={18} sx={{ mt: 0.5 }} />
+                    )}
+
+                </Box>
+                {/* Social Links: below details on xs & sm; bottom-right overlay from md up */}
+                {(profile?.links && profile.links.length > 0) ? (
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        sx={{
+                            gap: 1,
+                            mt: { xs: 1.5, md: 0 },
+                            justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'flex-end' },
+                            position: { xs: 'static', md: 'absolute' },
+                            right: { md: 24 },
+                            bottom: { md: 16 },
+                        }}
+                    >
+                        {profile.links.map((link, index) => (
+                            <Button
+                                key={index}
+                                variant="outlined"
+                                size="small"
+                                startIcon={getSocialIcon(link.url, link.text)}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                sx={{ textTransform: 'none', maxWidth: '100%' }}
+                            >
+                                {link.text}
+                            </Button>
+                        ))}
+                    </Stack>
+                ) : (
+                    <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                        <Skeleton variant="rounded" width={80} height={28} />
+                        <Skeleton variant="rounded" width={100} height={28} />
+                    </Stack>
+                )}
             </Box>
         </Paper>
     );

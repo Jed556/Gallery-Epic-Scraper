@@ -2,11 +2,11 @@ import React from 'react';
 import { Grid, Box, Typography, LinearProgress, Stack, Chip, CircularProgress } from '@mui/material';
 import GalleryCard from './GalleryCard';
 import { useScraper } from '../../contexts/ScraperContext';
-import { useAnimatedCounter } from '../../hooks/useAnimatedCounter';
+import { useCounter } from '../../hooks/useCounter';
 
 function GalleryGrid({ items = [], isLoading = false }) {
     const { setOriginFilter } = useScraper();
-    const animatedItemCount = useAnimatedCounter(items.length, 600);
+    const animatedItemCount = useCounter(items.length, 600);
 
     // If we have no items and not loading, show empty state
     if (!isLoading && items.length === 0) {
@@ -32,33 +32,29 @@ function GalleryGrid({ items = [], isLoading = false }) {
         );
     }
 
-    // Calculate skeleton cards needed when loading
-    const skeletonCount = isLoading && items.length === 0 ? 4 : 0;
-
     return (
         <Box>
             {/* Gallery Grid */}
             <Grid container spacing={3}>
-                {/* Real items */}
-                {items.map((item, index) => (
-                    <Grid key={item.id || item.url || index} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                        <GalleryCard
-                            item={item}
-                            isLoading={false}
-                            onOriginClick={setOriginFilter}
-                        />
-                    </Grid>
-                ))}
-
-                {/* Skeleton cards for initial loading */}
-                {Array.from({ length: skeletonCount }, (_, index) => (
-                    <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                        <GalleryCard
-                            item={null}
-                            isLoading={true}
-                        />
-                    </Grid>
-                ))}
+                {(items.length > 0 || isLoading) && (
+                    <>
+                        {items.map((item, index) => (
+                            <Grid key={item.id || item.url || index} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                                <GalleryCard
+                                    item={item}
+                                    isLoading={false}
+                                    onOriginClick={setOriginFilter}
+                                />
+                            </Grid>
+                        ))}
+                        {/* When loading and have fewer than a minimum grid fill, add placeholder skeleton cards (null items) */}
+                        {isLoading && items.length < 6 && Array.from({ length: Math.max(0, 6 - items.length) }, (_, i) => (
+                            <Grid key={`placeholder-${i}`} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                                <GalleryCard item={null} isLoading={true} />
+                            </Grid>
+                        ))}
+                    </>
+                )}
             </Grid>
 
             {/* Loading progress indicator */}
