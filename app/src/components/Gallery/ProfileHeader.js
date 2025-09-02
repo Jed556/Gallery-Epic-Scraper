@@ -27,6 +27,7 @@ import {
     AccountCircle,
 } from '@mui/icons-material';
 import { useAnimatedCounter } from '../../hooks/useAnimatedCounter';
+import { formatCompact, formatBytes } from '../../utils/numberFormat';
 
 // Skeleton component for profile header
 function ProfileHeaderSkeleton() {
@@ -162,15 +163,9 @@ function ProfileHeader({ profile, items = [] }) {
         return sum + bytes;
     }, 0);
 
-    const formatSize = (bytes) => {
-        if (!bytes) return '0 MB';
-        const mb = bytes / (1024 * 1024);
-        if (mb >= 1024) {
-            const gb = mb / 1024;
-            return `${gb.toFixed(2)} GB`;
-        }
-        return `${mb.toFixed(1)} MB`;
-    };
+    const formattedPhotos = formatCompact(totalPhotos);
+    const formattedVideos = formatCompact(totalVideos);
+    const formattedSize = formatBytes(totalSize);
 
     const coserName = profile.name;
 
@@ -244,7 +239,7 @@ function ProfileHeader({ profile, items = [] }) {
                         </Typography>
 
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {animatedItemCount} items • {totalPhotos.toLocaleString()} photos • {totalVideos.toLocaleString()} videos • {formatSize(totalSize)}
+                            {animatedItemCount} items • {formattedPhotos} photos • {formattedVideos} videos • {formattedSize}
                         </Typography>
 
                         {/* Social Links */}

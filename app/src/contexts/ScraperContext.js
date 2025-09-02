@@ -44,7 +44,7 @@ const initialState = {
     // UI state
     searchQuery: '',
     originFilter: '',
-    sortBy: 'default',
+    sortBy: 'date',
     sortDesc: true,
 
     // Export state
@@ -88,7 +88,11 @@ function scraperReducer(state, action) {
             };
 
         case 'ADD_ITEMS':
-            const newItems = [...state.galleryData, ...action.payload];
+            const normalizedAdd = action.payload.map(it => ({
+                ...it,
+                parsedDate: it.dateCreated ? (Date.parse(it.dateCreated) || 0) : 0
+            }));
+            const newItems = [...state.galleryData, ...normalizedAdd];
             return {
                 ...state,
                 galleryData: newItems,
@@ -99,8 +103,20 @@ function scraperReducer(state, action) {
             // For progressive loading - replace all items with new array
             return {
                 ...state,
-                galleryData: action.payload,
-                filteredData: filterAndSortItems(action.payload, state.searchQuery, state.originFilter, state.sortBy, state.sortDesc)
+                galleryData: action.payload.map(it => ({
+                    ...it,
+                    parsedDate: it.dateCreated ? (Date.parse(it.dateCreated) || 0) : 0
+                })),
+                filteredData: filterAndSortItems(
+                    action.payload.map(it => ({
+                        ...it,
+                        parsedDate: it.dateCreated ? (Date.parse(it.dateCreated) || 0) : 0
+                    })),
+                    state.searchQuery,
+                    state.originFilter,
+                    state.sortBy,
+                    state.sortDesc
+                )
             };
 
         case 'SET_COSER_PROFILE':
@@ -220,8 +236,8 @@ function filterAndSortItems(items, searchQuery, originFilter, sortBy, sortDesc) 
                     valueB = b.sizeBytes || 0;
                     break;
                 case 'date':
-                    valueA = new Date(a.date || 0);
-                    valueB = new Date(b.date || 0);
+                    valueA = typeof a.parsedDate === 'number' ? a.parsedDate : (a.dateCreated ? Date.parse(a.dateCreated) || 0 : 0);
+                    valueB = typeof b.parsedDate === 'number' ? b.parsedDate : (b.dateCreated ? Date.parse(b.dateCreated) || 0 : 0);
                     break;
                 default:
                     return 0;

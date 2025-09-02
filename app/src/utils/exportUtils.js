@@ -1,80 +1,75 @@
 // Utility functions for exporting gallery data
+import { formatBytes, formatCompact } from './numberFormat';
 
 export function exportToCSV(items, filename = 'gallery-data.csv') {
-    if (!items.length) return;
+  if (!items.length) return;
 
-    const headers = [
-        'ID',
-        'Page',
-        'Cosplayer',
-        'Cosplay',
-        'Origin',
-        'Photos',
-        'Videos',
-        'Views',
-        'Downloads',
-        'Date Created',
-        'File Size',
-        'Size (Bytes)',
-        'Download URL',
-        'Detail URL',
-        'Thumbnail'
-    ];
+  const headers = [
+    'ID',
+    'Page',
+    'Cosplayer',
+    'Cosplay',
+    'Origin',
+    'Photos',
+    'Videos',
+    'Views',
+    'Downloads',
+    'Date Created',
+    'File Size',
+    'Size (Bytes)',
+    'Download URL',
+    'Detail URL',
+    'Thumbnail'
+  ];
 
-    const csvContent = [
-        headers.join(','),
-        ...items.map(item => [
-            item.id || '',
-            item.page || '',
-            `"${(item.cosplayer || '').replace(/"/g, '""')}"`,
-            `"${(item.cosplay || '').replace(/"/g, '""')}"`,
-            `"${(item.origin || '').replace(/"/g, '""')}"`,
-            item.photos || 0,
-            item.videos || 0,
-            item.views || 0,
-            item.downloads || 0,
-            `"${(item.dateCreated || '').replace(/"/g, '""')}"`,
-            `"${(item.fileSize || '').replace(/"/g, '""')}"`,
-            item.sizeBytes || 0,
-            `"${(item.downloadUrl || '').replace(/"/g, '""')}"`,
-            `"${(item.detailUrl || '').replace(/"/g, '""')}"`,
-            `"${(item.thumbnail || '').replace(/"/g, '""')}"`
-        ].join(','))
-    ].join('\n');
+  const csvContent = [
+    headers.join(','),
+    ...items.map(item => [
+      item.id || '',
+      item.page || '',
+      `"${(item.cosplayer || '').replace(/"/g, '""')}"`,
+      `"${(item.cosplay || '').replace(/"/g, '""')}"`,
+      `"${(item.origin || '').replace(/"/g, '""')}"`,
+      item.photos || 0,
+      item.videos || 0,
+      item.views || 0,
+      item.downloads || 0,
+      `"${(item.dateCreated || '').replace(/"/g, '""')}"`,
+      `"${(item.fileSize || '').replace(/"/g, '""')}"`,
+      item.sizeBytes || 0,
+      `"${(item.downloadUrl || '').replace(/"/g, '""')}"`,
+      `"${(item.detailUrl || '').replace(/"/g, '""')}"`,
+      `"${(item.thumbnail || '').replace(/"/g, '""')}"`
+    ].join(','))
+  ].join('\n');
 
-    downloadFile(csvContent, filename, 'text/csv');
+  downloadFile(csvContent, filename, 'text/csv');
 }
 
 export function exportToJSON(items, filename = 'gallery-data.json') {
-    if (!items.length) return;
+  if (!items.length) return;
 
-    const jsonContent = JSON.stringify(items, null, 2);
-    downloadFile(jsonContent, filename, 'application/json');
+  const jsonContent = JSON.stringify(items, null, 2);
+  downloadFile(jsonContent, filename, 'application/json');
 }
 
 export function exportToHTML(items, profile, config, filename = 'gallery-report.html') {
-    if (!items.length) return;
+  if (!items.length) return;
 
-    const totalPhotos = items.reduce((sum, item) => sum + (item.photos || 0), 0);
-    const totalVideos = items.reduce((sum, item) => sum + (item.videos || 0), 0);
-    const totalSize = items.reduce((sum, item) => sum + (item.sizeBytes || 0), 0);
+  const totalPhotos = items.reduce((sum, item) => sum + (item.photos || 0), 0);
+  const totalVideos = items.reduce((sum, item) => sum + (item.videos || 0), 0);
+  const totalSize = items.reduce((sum, item) => sum + (item.sizeBytes || 0), 0);
 
-    const formatSize = (bytes) => {
-        if (!bytes) return '0 MB';
-        const mb = bytes / (1024 * 1024);
-        if (mb >= 1024) {
-            const gb = mb / 1024;
-            return `${gb.toFixed(2)} GB`;
-        }
-        return `${mb.toFixed(1)} MB`;
-    };
+  const headerPhotos = formatCompact(totalPhotos);
+  const headerVideos = formatCompact(totalVideos);
+  const headerSize = formatBytes(totalSize);
 
-    const origins = [...new Set(items.map(item => item.origin).filter(Boolean))].sort();
-    const originOptions = origins.map(origin =>
-        `<option value="${escapeHtml(origin)}">${escapeHtml(origin)}</option>`
-    ).join('');
+  const origins = [...new Set(items.map(item => item.origin).filter(Boolean))].sort();
+  const originOptions = origins.map(origin =>
+    `<option value="${escapeHtml(origin)}">${escapeHtml(origin)}</option>`
+  ).join('');
 
-    const cardsHtml = items.map(item => `
+  const cardsHtml = items.map(item => `
     <article class="card" data-name="${escapeHtml(item.cosplay?.toLowerCase() || '')}" 
              data-origin="${escapeHtml(item.origin?.toLowerCase() || '')}" 
              data-photos="${item.photos || 0}" 
@@ -84,15 +79,15 @@ export function exportToHTML(items, profile, config, filename = 'gallery-report.
              data-size-mb="${(item.sizeBytes || 0) / (1024 * 1024)}">
       <div class="thumb">
         ${config.renderThumbnails && item.thumbnail ?
-            `<img src="${escapeHtml(item.thumbnail)}" loading="lazy" alt="${escapeHtml(item.cosplay || '')}">` :
-            '<div class="no-thumb">No image</div>'
-        }
+      `<img src="${escapeHtml(item.thumbnail)}" loading="lazy" alt="${escapeHtml(item.cosplay || '')}">` :
+      '<div class="no-thumb">No image</div>'
+    }
         <div class="overlay">${item.photos || 0}P / ${item.videos || 0}V</div>
       </div>
       <div class="meta">
         <div class="title">${escapeHtml(item.cosplay || '')}</div>
         <div class="subtitle">${escapeHtml(item.origin || '')}</div>
-        <div class="stats">${escapeHtml(item.dateCreated || '')} • ${item.views || 0} views • ${item.downloads || 0} dl${item.fileSize ? ` • ${item.fileSize}` : ''}</div>
+  <div class="stats">${escapeHtml(item.dateCreated || '')} • ${formatCompact(item.views || 0)} views • ${formatCompact(item.downloads || 0)} dl${item.fileSize ? ` • ${escapeHtml(item.fileSize)}` : ''}</div>
         <div class="actions">
           <a class="btn" href="${escapeHtml(item.downloadUrl || '')}" target="_blank" rel="noopener">Download</a>
           ${item.detailUrl ? `<a class="link" href="${escapeHtml(item.detailUrl)}" target="_blank" rel="noopener">Detail</a>` : ''}
@@ -101,7 +96,7 @@ export function exportToHTML(items, profile, config, filename = 'gallery-report.
     </article>
   `).join('\n');
 
-    const htmlContent = `<!doctype html>
+  const htmlContent = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -146,7 +141,7 @@ export function exportToHTML(items, profile, config, filename = 'gallery-report.
       <div class="profile">
         <div class="headline">
           <div class="name">${escapeHtml(profile?.name || 'Gallery Epic Scraper')}</div>
-          <div class="meta">Scraped ${items.length} items • ${totalPhotos.toLocaleString()} photos • ${totalVideos.toLocaleString()} videos • ${formatSize(totalSize)}</div>
+          <div class="meta">Scraped ${items.length} items • ${headerPhotos} photos • ${headerVideos} videos • ${headerSize}</div>
         </div>
         <div style="flex:1"></div>
         <div class="toolbar">
@@ -228,29 +223,29 @@ export function exportToHTML(items, profile, config, filename = 'gallery-report.
 </body>
 </html>`;
 
-    downloadFile(htmlContent, filename, 'text/html');
+  downloadFile(htmlContent, filename, 'text/html');
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function generateFilename(config, extension) {
-    const base = config.customFilename || `galleryepic_coser_${config.coserId}`;
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-    return `${base}_${timestamp}.${extension}`;
+  const base = config.customFilename || `galleryepic_coser_${config.coserId}`;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+  return `${base}_${timestamp}.${extension}`;
 }

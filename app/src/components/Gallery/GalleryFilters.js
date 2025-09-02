@@ -115,13 +115,12 @@ function GalleryFilters() {
                                 label="Sort By"
                                 onChange={(e) => handleSortChange(e.target.value)}
                             >
-                                <MenuItem value="default">Default</MenuItem>
-                                <MenuItem value="photos">Photos</MenuItem>
-                                <MenuItem value="videos">Videos</MenuItem>
+                                <MenuItem value="date">Date</MenuItem>
                                 <MenuItem value="views">Views</MenuItem>
                                 <MenuItem value="downloads">Downloads</MenuItem>
+                                <MenuItem value="photos">Photos</MenuItem>
+                                <MenuItem value="videos">Videos</MenuItem>
                                 <MenuItem value="size">File Size</MenuItem>
-                                <MenuItem value="date">Date</MenuItem>
                             </Select>
                         </FormControl>
 

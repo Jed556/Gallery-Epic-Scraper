@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCompact, formatBytes } from '../../utils/numberFormat';
 import {
     Card,
     CardMedia,
@@ -17,7 +18,6 @@ import {
     PhotoLibrary,
     Storage,
     Videocam,
-    CalendarToday,
     ImageNotSupported,
 } from '@mui/icons-material';
 
@@ -247,92 +247,74 @@ function GalleryCard({ item, isLoading = false, onOriginClick }) {
                     />
                 )}
 
-                {/* Comprehensive Stats Section */}
+                {/* Stats Line */}
                 <Box sx={{ flex: 1, mb: 2 }}>
-                    {/* Primary Stats Line */}
-                    <Box sx={{ mb: 1.5 }}>
-                        <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap">
-                            {item.dateCreated && (
-                                <>
+                    {(() => {
+                        const segments = [];
+
+                        if (item.dateCreated) {
+                            segments.push(
+                                <Box key="date" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    {/* <CalendarToday sx={{ fontSize: '0.9rem', opacity: 0.85 }} /> */}
                                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                                         {item.dateCreated}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>•</Typography>
-                                </>
-                            )}
-
-                            {(item.views > 0 || item.downloads > 0 || item.fileSize) && (
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {item.views > 0 && `${item.views.toLocaleString()} views`}
-                                    {item.views > 0 && item.downloads > 0 && ' • '}
-                                    {item.downloads > 0 && `${item.downloads.toLocaleString()} dl`}
-                                    {(item.views > 0 || item.downloads > 0) && item.fileSize && ' • '}
-                                    {item.fileSize && `${item.fileSize}`}
-                                </Typography>
-                            )}
-                        </Stack>
-                    </Box>
-
-                    {/* Secondary Stats - Individual detailed items */}
-                    <Stack spacing={0.5}>
-                        {/* Photos and Videos count in a compact format */}
-                        {(item.photos > 0 || item.videos > 0) && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <PhotoLibrary fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                        {item.photos || 0}P
-                                    </Typography>
                                 </Box>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    /
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Videocam fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                        {item.videos || 0}V
-                                    </Typography>
+                            );
+                        }
+
+                        if (item.views > 0) {
+                            segments.push(
+                                <Box key="views" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Visibility sx={{ fontSize: '0.9rem', opacity: 0.85 }} />
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{formatCompact(item.views)}</Typography>
                                 </Box>
-                            </Box>
-                        )}
+                            );
+                        }
 
-                        {/* Individual stat lines for better readability */}
-                        {item.views > 0 && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Visibility fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {item.views.toLocaleString()} views
-                                </Typography>
-                            </Box>
-                        )}
+                        if (item.downloads > 0) {
+                            segments.push(
+                                <Box key="downloads" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Download sx={{ fontSize: '0.9rem', opacity: 0.85 }} />
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{formatCompact(item.downloads)}</Typography>
+                                </Box>
+                            );
+                        }
 
-                        {item.downloads > 0 && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Download fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {item.downloads.toLocaleString()} downloads
-                                </Typography>
-                            </Box>
-                        )}
+                        if (item.fileSize) {
+                            // Attempt to parse fileSize like "123.4 MB" to derive bytes for normalized formatting.
+                            let displaySize = item.fileSize;
+                            const sizeMatch = /([\d.,]+)\s*(KB|MB|GB|TB)/i.exec(item.fileSize);
+                            if (sizeMatch) {
+                                const val = parseFloat(sizeMatch[1].replace(/,/g, ''));
+                                const unit = sizeMatch[2].toUpperCase();
+                                const multiplier = { KB: 1024, MB: 1024**2, GB: 1024**3, TB: 1024**4 }[unit] || 1;
+                                const bytes = val * multiplier;
+                                displaySize = formatBytes(bytes);
+                            }
+                            segments.push(
+                                <Box key="size" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Storage sx={{ fontSize: '0.9rem', opacity: 0.85 }} />
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{displaySize}</Typography>
+                                </Box>
+                            );
+                        }
 
-                        {item.fileSize && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Storage fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {item.fileSize}
-                                </Typography>
-                            </Box>
-                        )}
+                        if (!segments.length) return null;
 
-                        {item.dateCreated && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <CalendarToday fontSize="small" color="action" sx={{ fontSize: '1rem' }} />
-                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                                    {item.dateCreated}
-                                </Typography>
-                            </Box>
-                        )}
-                    </Stack>
+                        return (
+                            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                                {segments.map((seg, i) => (
+                                    <React.Fragment key={i}>
+                                        {i > 0 && (
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', opacity: 0.6 }}>•</Typography>
+                                        )}
+                                        {seg}
+                                    </React.Fragment>
+                                ))}
+                            </Stack>
+                        );
+                    })()}
                 </Box>
 
                 {/* Actions */}

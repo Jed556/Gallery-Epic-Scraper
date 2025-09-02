@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { formatCompact } from '../utils/numberFormat';
 
-export function useAnimatedCounter(targetValue, duration = 1000) {
+// Generic animated counter hook.
+// Signature: useCounter(targetValue, duration=1000, useCompact=false)
+// When useCompact is true returns a compact-formatted string; otherwise returns a number.
+export function useCounter(targetValue, duration = 1000, useCompact = false) {
     const [currentValue, setCurrentValue] = useState(0);
     const animationRef = useRef();
     const startTimeRef = useRef();
     const startValueRef = useRef(0);
 
     useEffect(() => {
-        if (targetValue === currentValue) return;
+        if (targetValue === currentValue) return; // Already at target
 
         const startValue = currentValue;
         startValueRef.current = startValue;
@@ -18,7 +22,7 @@ export function useAnimatedCounter(targetValue, duration = 1000) {
             const elapsed = now - startTimeRef.current;
             const progress = Math.min(elapsed / duration, 1);
 
-            // Use easeOutCubic for smooth animation
+            // Ease-out cubic
             const easeOutCubic = 1 - Math.pow(1 - progress, 3);
             const animatedValue = Math.floor(startValue + (targetValue - startValue) * easeOutCubic);
 
@@ -32,13 +36,8 @@ export function useAnimatedCounter(targetValue, duration = 1000) {
         };
 
         animationRef.current = requestAnimationFrame(animate);
-
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-            }
-        };
+        return () => animationRef.current && cancelAnimationFrame(animationRef.current);
     }, [targetValue, duration, currentValue]);
 
-    return currentValue;
+    return useCompact ? formatCompact(currentValue) : currentValue;
 }
