@@ -1,0 +1,80 @@
+<!-- Gallery Scraper – App Icon (no scraper blade, transparent background) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Gallery Scraper App Icon</title>
+  <desc id="desc">Rounded diamond badge with a picture frame and photo. Transparent background.</desc>
+
+  <!-- ====== Defs ====== -->
+  <defs>
+    <!-- Soft gradient for badge -->
+    <linearGradient id="g-badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6750a4"/>
+      <stop offset="100%" stop-color="#8571c6"/>
+    </linearGradient>
+
+    <!-- Subtle inner highlight -->
+    <linearGradient id="g-stroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.85)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.15)"/>
+    </linearGradient>
+
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+
+    <!-- Icon strokes -->
+    <style>
+      .line { stroke: #fff; stroke-width: 28; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    </style>
+  </defs>
+
+  <!-- ====== Badge (rounded diamond) ====== -->
+  <g filter="url(#shadow)">
+    <path d="
+      M512 64
+      C560 64, 608 96, 640 128
+      L896 384
+      C928 416, 960 464, 960 512
+      C960 560, 928 608, 896 640
+      L640 896
+      C608 928, 560 960, 512 960
+      C464 960, 416 928, 384 896
+      L128 640
+      C96 608, 64 560, 64 512
+      C64 464, 96 416, 128 384
+      L384 128
+      C416 96, 464 64, 512 64
+      Z"
+      fill="url(#g-badge)"/>
+    <path d="
+      M512 96
+      C552 96, 592 124, 620 152
+      L872 404
+      C900 432, 928 472, 928 512
+      C928 552, 900 592, 872 620
+      L620 872
+      C592 900, 552 928, 512 928
+      C472 928, 432 900, 404 872
+      L152 620
+      C124 592, 96 552, 96 512
+      C96 472, 124 432, 152 404
+      L404 152
+      C432 124, 472 96, 512 96
+      Z"
+      fill="none" stroke="url(#g-stroke)" stroke-width="12"/>
+  </g>
+
+  <!-- ====== Gallery frame ====== -->
+  <rect x="260" y="328" width="504" height="368" rx="40" ry="40" fill="rgba(255,255,255,0.12)" stroke="#fff" stroke-width="20"/>
+  <!-- Photo: sun + mountains -->
+  <circle cx="370" cy="420" r="44" fill="#fff"/>
+  <path d="M300 632 L420 512 L520 612 L600 532 L724 656 L300 656 Z" fill="#fff" opacity="0.95"/>
+
+  <!-- Frame inner line for detail -->
+  <rect x="290" y="358" width="444" height="308" rx="28" ry="28" class="line" opacity="0.35"/>
+
+  <!-- ====== Spark lines (hint of “action”) ====== -->
+  <path d="M240 300 L200 260" class="line" opacity="0.35"/>
+  <path d="M820 320 L860 280" class="line" opacity="0.35"/>
+  <path d="M220 740 L180 780" class="line" opacity="0.35"/>
+</svg>
