@@ -190,6 +190,78 @@ class ScrapingService {
         }
     }
 
+    /**
+     * Fallback: parse download page ( /en/download/cosplay/:id ) for file size only.
+     * The size often appears in a container: <div class="flex justify-between items-center px-4 py-2"><p>[Name] [18P - 31MB] Title</p><p>31 MB</p></div>
+     */
+    async parseDownloadPageForSize(downloadUrl) {
+        try {
+            const html = await this.fetchPage(downloadUrl);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const sizePattern = /([\d.,]+)\s*(KB|MB|GB)\b/i;
+            let fileSize = null;
+
+            // 1. Look for the flex header container with justify-between items-center
+            const headerDivs = Array.from(doc.querySelectorAll('div')).filter(div => {
+                const cl = Array.from(div.classList);
+                return ['flex', 'justify-between', 'items-center'].every(cls => cl.includes(cls));
+            });
+
+            for (const div of headerDivs) {
+                const pTags = div.querySelectorAll('p');
+                if (pTags.length) {
+                    // (a) Second p tag commonly holds just the size
+                    if (pTags.length > 1) {
+                        const candidate = pTags[1].textContent.trim();
+                        const m = candidate.match(sizePattern);
+                        if (m) {
+                            fileSize = this.normalizeSizeText(candidate);
+                            break;
+                        }
+                    }
+                    // (b) Bracket pattern inside first p: [18P - 31MB]
+                    const firstTxt = pTags[0].textContent.trim();
+                    const bracketMatch = firstTxt.match(/\[([^\]]*?)([\d.,]+)\s*(KB|MB|GB)\]/i);
+                    if (!fileSize && bracketMatch) {
+                        fileSize = this.normalizeSizeText(`${bracketMatch[2]} ${bracketMatch[3]}`);
+                        break;
+                    }
+                    // (c) Scan all p tags
+                    if (!fileSize) {
+                        for (const p of pTags) {
+                            const txt = p.textContent.trim();
+                            const m2 = txt.match(sizePattern);
+                            if (m2) {
+                                fileSize = this.normalizeSizeText(txt);
+                                break;
+                            }
+                        }
+                        if (fileSize) break;
+                    }
+                }
+            }
+
+            if (!fileSize) {
+                // Global fallback
+                const allP = doc.querySelectorAll('p');
+                for (const p of allP) {
+                    const txt = p.textContent.trim();
+                    if (sizePattern.test(txt)) {
+                        fileSize = this.normalizeSizeText(txt);
+                        break;
+                    }
+                }
+            }
+
+            return fileSize;
+        } catch (e) {
+            console.log(`Download page size parse error (${downloadUrl}): ${e.message}`);
+            return null;
+        }
+    }
+
     async scrapePage(coserId, page, onProgress) {
         const pageUrl = `${this.BASE_URL}/en/coser/${coserId}/${page}`;
         const items = [];
@@ -329,7 +401,18 @@ class ScrapingService {
                     createdDate = detailData.createdDate;
                     fileSize = detailData.fileSize;
 
-                    await this.delay(400);
+                    await this.delay(350);
+                }
+
+                // Fallback: fetch download page if size still missing
+                if (!fileSize && downloadLink) {
+                    try {
+                        const downloadSize = await this.parseDownloadPageForSize(fullDownload);
+                        if (downloadSize) fileSize = downloadSize;
+                        await this.delay(250);
+                    } catch (e) {
+                        console.log(`Fallback size fetch failed: ${e.message}`);
+                    }
                 }
 
                 items.push({
