@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/logo.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#6750a4" />
+  <meta name="description" content="Gallery Epic Scraper - Modern cosplayer gallery scraping tool" />
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.svg" />
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <title>Gallery Epic Scraper</title>
+
+  <!-- Prevent dark mode flickering -->
+  <script>
+    (function () {
+      // Check for saved theme preference or default to system preference
+      const savedTheme = localStorage.getItem('theme-mode');
+      let theme = savedTheme;
+
+      if (!theme) {
+        // Check system preference
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+      }
+
+      // Set the color-scheme CSS property to prevent flickering
+      document.documentElement.style.colorScheme = theme;
+
+      // Add a data attribute for additional styling if needed
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
+
+</html>
